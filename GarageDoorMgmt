@@ -193,7 +193,6 @@ def contactHandler(evt) {
     }
     
     if (closeSunset == true && evt.value == "open" && closeAfter && isItNight()){
-        log.debug "call to closeWhenDark"
         log.debug "closeAfter: $closeAfter minutes"
         //schedule this to run after the input delay
         //because it is night time
@@ -294,10 +293,10 @@ def closeWhenDark(){
 	if (doorSensor.contactState.value == "open") {
     	sendPush("Closing ${getDoorName()}, open for $closeAfter minutes at Night")
         if ( phoneNumber ) {
-            sendSms( phoneNumber, "WARNING! ${getDoorName()} closing in $closeAfter minutes")
+            sendSms( phoneNumber, "WARNING! ${getDoorName()} closing in 2 minutes")
        }
        /* close() */
-       runIn(closeAfter * 60, close)
+       runIn(120, close)
     }
 }
 
@@ -367,4 +366,3 @@ private isItNight(){
             	return false
             }
       }
-
