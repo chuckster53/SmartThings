@@ -61,7 +61,7 @@ preferences {
             input "sunsetOffsetDir", "enum", title: "Before or After", required: false, metadata: [values: ["Before","After"]]
         }
         section ("If opened after dark, close after...") {
-            input "closeAfter", "number", title: "Hours", required: false
+            input "closeAfter", "number", title: "Minutes", required: false
         }
     }
     
@@ -180,6 +180,8 @@ def presenceHandler(evt) {
 def contactHandler(evt) {
 	log.debug "Contact is in ${evt.value} state"
     if(evt.value == "open" && notify.contains("Opening")) {
+        def openTime = "${evt.date}"
+        log.debug "$openTime"
     	def msg = "${getDoorName()} opened"
         log.debug "$msg"
         sendPush("$msg")
@@ -190,12 +192,12 @@ def contactHandler(evt) {
         sendPush("$msg")
     }
     
-    if (closeSunset == true && evt.value == "open" && closeAfter){
+    if (closeSunset == true && evt.value == "open" && closeAfter && isItNight()){
         log.debug "call to closeWhenDark"
-        // ORG runOnce(now + closeAfter, closeWhenDark)
-        //schedule this to run one time
-        runIn(3600 * closeAfter, closeWhenDark)
-        log.debug "return from closeWhenDark"
+        log.debug "closeAfter: $closeAfter minutes"
+        //schedule this to run after the input delay
+        //because it is night time
+        runIn(closeAfter * 60, closeWhenDark)
     }
     
     if (notifyLeftOpen && evt.value == "open"){
@@ -234,8 +236,6 @@ def scheduleDoorCheck() {
 def doorOpenTooLong(){
 	log.debug "doorOpenTooLong(): $state.openTime secs"
     if (doorSensor.latestValue("contact") == "open") {
-    	//def mins = state.openTime / 60
-    	//sendPush("${getDoorName()} left open for ${mins} min${mins > 1 ? "s" : ""}")
         state.openNotifyCount = state.openNotifyCount + 1
         
 	log.debug "notifyMax: $notifyMax"
@@ -292,17 +292,26 @@ def open(){
 def closeWhenDark(){
 	log.debug "closeWhenDark"
 	if (doorSensor.contactState.value == "open") {
-    	sendPush("Closing ${getDoorName()}, open for $closeAfter hour duration after sunset")
-        close()
+    	sendPush("Closing ${getDoorName()}, open for $closeAfter minutes at Night")
+        if ( phoneNumber ) {
+            sendSms( phoneNumber, "WARNING! ${getDoorName()} closing in $closeAfter minutes")
+       }
+       /* close() */
+       runIn(closeAfter * 60, close)
     }
 }
 
 def closeAfterSunset(){
-    log.debug "closeAfterSunset now: $now"
-	state.sunsetTime = now
+    log.debug "closeAfterSunset timeNow: $timeNow"
+	state.sunsetTime = timeNow
+    
     if (closeSunset == true && doorSensor.contactState.value == "open") {
-    	sendPush("Closing ${getDoorName()} after sunset")
-        close()
+    	sendPush("Closing ${getDoorName()} because it is after sunset")
+        if ( phoneNumber ) {
+            sendSms( phoneNumber, "WARNING! ${getDoorName()} closing in 2 minutes")
+        }
+        /* close() */
+        runIn(120, close)
     }
 }
 
@@ -320,8 +329,11 @@ def scheduleCloseGarage(sunsetString) {
     
     
     log.debug "Offset Minutes: $offsetMinutes"
+    def timeNow = new Date()
+    log.info "SCG,timeNow: ${timeNow.format(dateFormat, location.timeZone)}"
     def sunsetOffset = new Date(sunsetTime.time + (offsetMinutes * 60 * 1000))
-          
+    log.info "SCG,sunsetOffset: ${sunsetOffset.format(dateFormat, location.timeZone)}"
+    
 
 	//schedule this to run one time
     log.info "Scheduling for: ${sunsetOffset.format(dateFormat, location.timeZone)} (sunset is ${sunsetTime.format(dateFormat, location.timeZone)})"
@@ -340,3 +352,19 @@ def scheduleCloseGarage(sunsetString) {
         }
     }
 }
+
+private isItNight(){
+        log.debug "sunrise ${getSunriseAndSunset().sunrise.time}"
+        log.debug "sunset ${getSunriseAndSunset().sunset.time}"
+        log.debug "now: ${now()}"
+           if(getSunriseAndSunset().sunrise.time > now() || 
+                 getSunriseAndSunset().sunset.time < now()){
+                log.debug "isItNight: Yes"
+            	return true
+            }
+            else {
+                log.debug "isItNight: No"
+            	return false
+            }
+      }
+
