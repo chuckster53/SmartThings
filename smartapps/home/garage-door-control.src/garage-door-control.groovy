@@ -226,8 +226,11 @@ def close(){
      * first call off just in case the switch was left in on mode
      */
     switches?.off()
+       		log.debug( "Switch OFF" )
 	switches?.on()
+       		log.debug( "Switch ON" )
     switches?.off()
+       		log.debug( "Switch OFF" )
     /* doorSwitch.push() */
 }
 
@@ -326,3 +329,18 @@ private getLabel() {
 private getSunsetOffset() {
 	sunsetOffsetValue ? (sunsetOffsetDir == "Before" ? "-$sunsetOffsetValue" : sunsetOffsetValue) : null
 }
+
+private isItNight(){
+        log.debug "sunrise ${getSunriseAndSunset().sunrise.time}"
+        log.debug "sunset ${getSunriseAndSunset().sunset.time}"
+        log.debug "now: ${now()}"
+           if(getSunriseAndSunset().sunrise.time > now() || 
+                 getSunriseAndSunset().sunset.time < now()){
+                log.debug "isItNight: Yes"
+            	return true
+            }
+            else {
+                log.debug "isItNight: No"
+            	return false
+            }
+      }
