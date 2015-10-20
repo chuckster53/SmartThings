@@ -47,8 +47,8 @@ preferences {
         }
     }
     
-        /* Night Settings */
-        page(name: "page3", title: "", uninstall:false, install:false) {
+   /* Night Settings */
+   page(name: "page3", title: "", uninstall:false, install:false) {
         section ("Night Settings") {
             //input "closeSunset", "enum", title: "Close after sunset", required: false, metadata: [values: ["Yes","No"]]
             input "sunsetOff", "bool", title: "Close after sunset", required: false
@@ -82,7 +82,7 @@ def installed() {
 }
 
 def updated() {
-    log.debug "Updated with settings: ${settings}"
+    log.debug "Updated with settings:  ${settings}"
 	unsubscribe()
 	//unschedule handled in astroCheck method
 	initialize()
@@ -226,11 +226,11 @@ def close(){
      * first call off just in case the switch was left in on mode
      */
     switches?.off()
-       		log.debug( "Switch OFF" )
+    log.debug( "Switch OFF" )
 	switches?.on()
-       		log.debug( "Switch ON" )
+    log.debug( "Switch ON" )
     switches?.off()
-       		log.debug( "Switch OFF" )
+    log.debug( "Switch OFF" )
     /* doorSwitch.push() */
 }
 
@@ -335,7 +335,7 @@ private isItNight(){
         log.debug "sunset ${getSunriseAndSunset().sunset.time}"
         log.debug "now: ${now()}"
            if(getSunriseAndSunset().sunrise.time > now() || 
-                 getSunriseAndSunset().sunset.time < now()){
+                getSunriseAndSunset().sunset.time < now()){
                 log.debug "isItNight: Yes"
             	return true
             }
