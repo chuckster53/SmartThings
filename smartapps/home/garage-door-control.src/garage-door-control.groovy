@@ -70,6 +70,15 @@ preferences {
             input "sendPushMessage", "enum", title: "Send a push notification?", options: ["Yes", "No"], required: false
             input "phoneNumber", "phone", title: "Send a text message?", required: false
         }
+        section ("Open Too Long") {
+        	paragraph "If left open longer than..."
+            input "notifyLeftOpen", "number", title: "Minutes", required: false
+            paragraph "Repeat until closed..."
+            input "notifyFrequency", "number", title: "Minutes", required: false
+            paragraph "A maximum of..."
+            input "notifyMax", "number", title: "Times", required: false
+            paragraph "Leave empty for unlimited notifications"
+        }
 	}
 
 }
@@ -97,6 +106,7 @@ def initialize() {
 	subscribe(presenceDepart, "presence", presenceHandler)
 	subscribe(doorSensor, "contact", contactHandler)
 	subscribe(app, appTouchHandler)
+
 
     /* check door state for left open */
     if (settings.notifyLeftOpen && settings.doorSensor.contactState?.value == "open"){
