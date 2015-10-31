@@ -27,28 +27,18 @@ definition(
 )
 
 preferences {
-	page(name: "page1", title: "", uninstall:true, install:true) {
     	section("The Door") {
             input "doorSensor", "capability.contactSensor", title: "Which Sensor? ", required:true
            	input "switches", "capability.switch", multiple: true
             input "doorName", "text", title: "Name", defaultValue:"Garage Door", required:false
         }
-        section("Settings") {
-			href "page2", title:"Arrival / Departure"
-            href "page3", title:"Night Settings"
-            href "page4", title:"Notifications"
-		}
-    }
     /* Presence */
-    page(name: "page2", title: "", uninstall:false, install:false) {
     	section("Arrival / Departure"){
         	input "presenceArrive", "capability.presenceSensor", title: "Open when these people arrive:", multiple:true, required: false
         	input "presenceDepart", "capability.presenceSensor", title: "Close when these people leave:", multiple:true, required: false
         }
-    }
     
    /* Night Settings */
-   page(name: "page3", title: "", uninstall:false, install:false) {
         section ("Night Settings") {
             //input "closeSunset", "enum", title: "Close after sunset", required: false, metadata: [values: ["Yes","No"]]
             input "sunsetOff", "bool", title: "Close after sunset", required: false
@@ -63,9 +53,8 @@ preferences {
         section ("If opened after dark, close after...") {
             input "closeAfter", "number", title: "Minutes", required: false
         }
-    }
+        
     /* Notifications */
-    page(name: "page4", title: "", uninstall:false, install:true) {
 	    section( "Notifications" ) {
             input "sendPushMessage", "enum", title: "Send a push notification?", options: ["Yes", "No"], required: false
             input "phoneNumber", "phone", title: "Send a text message?", required: false
@@ -79,7 +68,6 @@ preferences {
             input "notifyMax", "number", title: "Times", required: false
             paragraph "Leave empty for unlimited notifications"
         }
-	}
 
 }
 
@@ -107,6 +95,8 @@ def initialize() {
 	subscribe(doorSensor, "contact", contactHandler)
 	subscribe(app, appTouchHandler)
 
+   	state.openTime = 0
+    state.openNotifyCount = 0
 
     /* check door state for left open */
     if (settings.notifyLeftOpen && settings.doorSensor.contactState?.value == "open"){
@@ -125,6 +115,7 @@ def appTouchHandler(evt){
 
 def contactHandler(evt) {
 	log.debug "Contact is in ${evt.value} state"
+    /**************
     if(evt.value == "open" && notify.contains("Opening")) {
         def openTime = "${evt.date}"
         log.debug "$openTime"
@@ -137,18 +128,24 @@ def contactHandler(evt) {
         log.debug "$msg"
         sendPush("$msg")
     }
+    ***************/
     
     // if (closeSunset == true && evt.value == "open" && closeAfter && isItNight()){
-     if (evt.value == "open" && closeAfter && isItNight()){
-        log.debug "closeAfter: $closeAfter minutes"
-        //schedule this to run after the input delay
-        //because it is night time
-        runIn(closeAfter * 60, closeWhenDark)
+     if (evt.value == "open") { 
+        def openTime = "${evt.date}"
+        if (closeAfter && isItNight()){
+            log.debug "closeAfter: $closeAfter minutes"
+            //schedule this to run after the input delay
+            //because it is night time
+            runIn(closeAfter * 60, closeWhenDark)
+        }
+        else {
+             if (notifyLeftOpen && evt.value == "open"){
+    	         scheduleDoorCheck()
+             }
+       }
     }
     
-    if (notifyLeftOpen && evt.value == "open"){
-    	scheduleDoorCheck()
-    }
     
     if (evt.value == "close"){
     	state.openTime = 0
@@ -354,3 +351,18 @@ private isItNight(){
             	return false
             }
       }
+      
+      /* Methods */
+def formatSeconds(seconds){
+    log.debug "formatSeconds"
+	if (seconds < 60) { return "$seconds seconds" }
+    def minutes = (seconds / 60)
+    if (minutes == 1) { return "$minutes minute" }
+    if (minutes > 0 && minutes < 59) { return "$minutes minutes" }
+    def hours = (minutes / 60)
+    if (hours == 1) { return "$hours hour" }
+    if (hours > 0 && hours < 24) { return "$hours hours" }
+    def days = (hours / 24)
+    if (days == 1) { return "$days day" }
+    if (days > 1) { return "$days days" }
+}
