@@ -10,7 +10,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *  Garage Door Control
+ *  Garage Door Control 
  *
  *  Author: Chuck Wrobel
  *
@@ -74,8 +74,8 @@ preferences {
 def getDoorName() { settings.doorName ?: "Garage Door" }
 
 def installed() {
-    log.debug "Installed with settings: ${settings}"
 	initialize()
+    log.debug "Installed with settings: ${settings}"
 }
 
 def updated() {
@@ -89,7 +89,9 @@ def initialize() {
 	subscribe(location, "position", locationPositionChange)
 	// subscribe(location, "sunriseTime", sunriseSunsetTimeHandler)
 	subscribe(location, "sunsetTime", sunriseSunsetTimeHandler)
+    /**
    	log.debug "${getDoorName()} is ${settings.doorSensor.contactState?.value}"
+    **/
 	subscribe(presenceArrive, "presence", presenceHandler)
 	subscribe(presenceDepart, "presence", presenceHandler)
 	subscribe(doorSensor, "contact", contactHandler)
@@ -147,7 +149,8 @@ def contactHandler(evt) {
     }
     
     
-    if (evt.value == "close"){
+    if (evt.value == "closed"){
+            log.debug "close()"
     	state.openTime = 0
         state.openNotifyCount = 0
     }
@@ -200,6 +203,7 @@ def doorOpenTooLong(){
         
 	log.debug "notifyMax: $notifyMax"
         if (notifyMax && state.openNotifyCount == notifyMax){
+	log.debug "Max hit"
         	sendPush("Last reminder! ${getDoorName()} left open for ${formatSeconds(state.openTime)}")
                 if ( phoneNumber ) {
        				log.debug( "sending text message" )
