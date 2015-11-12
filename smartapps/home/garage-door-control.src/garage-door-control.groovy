@@ -6,7 +6,7 @@
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  Unless required by applicable law or  agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
@@ -117,11 +117,11 @@ def appTouchHandler(evt){
 
 def contactHandler(evt) {
 	log.debug "Contact is in ${evt.value} state"
-    /**************
+    
     if(evt.value == "open" && notify.contains("Opening")) {
         def openTime = "${evt.date}"
         log.debug "$openTime"
-    	def msg = "${getDoorName()} opened"
+    	def msg = "${getDoorName()} opened $openTime"
         log.debug "$msg"
         sendPush("$msg")
     }
@@ -130,7 +130,7 @@ def contactHandler(evt) {
         log.debug "$msg"
         sendPush("$msg")
     }
-    ***************/
+    
     
     // if (closeSunset == true && evt.value == "open" && closeAfter && isItNight()){
      if (evt.value == "open") { 
